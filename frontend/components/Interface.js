@@ -29,14 +29,14 @@ const Interface = () => {
             });
             
             var activeAccount = accounts[0];
-            // var balance = await window.ethereum.request({
-            //     "method": "eth_getBalance",
-            //     "params": [
-            //         activeAccount,
-            //         "latest"
-            //     ]
-            // });           
-            // balance = utils.moveDecimalLeft(ethers.toBigInt(balance).toString(), 18);
+            var balance = await window.ethereum.request({
+                "method": "eth_getBalance",
+                "params": [
+                    activeAccount,
+                    "latest"
+                ]
+            });           
+            balance = utils.moveDecimalLeft(ethers.toBigInt(balance).toString());
 
             var newAccountState = {
                 chainId: chainId,
@@ -52,21 +52,39 @@ const Interface = () => {
         updateMetamaskButtonState(ButtonState.Normal);
     };
 
+    const depositETH = async () => {
+        
+    };
+
     return (
         <div> 
-        {
-            !!(account) ? 
-                (
-                    <div>
-                        <p>ChainId: {account.chainId}</p>
-                        <p>Wallet address: {account.address}</p>
-                        <p>Balance: {account.balance} ETH</p>
-                    </div>
-                ) : 
-                (
-                    <button onClick={connectMetamask} disabled={metamaskButtonState == ButtonState.Disabled} >Connect Metamask</button>
-                )
-        }
+            {
+                !!(account) ? 
+                    (
+                        <div>
+                            <p>ChainId: {ethers.toBigInt(account.chainId).toString()}</p>
+                            <p>Wallet address: {account.address}</p>
+                            <p>Balance: {account.balance} ETH</p>
+                        </div>
+                    ) : (
+                        <button onClick={connectMetamask} disabled={metamaskButtonState == ButtonState.Disabled} >Connect Metamask</button>
+                    )
+            }
+            <div>
+                <hr/>
+            </div>
+            {
+                !!(account) ? 
+                    (
+                        <div>
+                            <button onClick={depositETH}>Deposit 1 ETH</button>
+                        </div>
+                    ) : (
+                        <div>
+                            <p>You need Metamask</p>
+                        </div>
+                    )
+            }
         </div>
     );
 };

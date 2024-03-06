@@ -3,7 +3,7 @@ const ethers = require("ethers");
 const utils = {
     moveDecimalLeft: (str, count) => {
         let start = str.length - count;
-        let prePadding = "";
+        let prePadding = "0";
 
         while(start > 0) {
             prePadding += "0";
