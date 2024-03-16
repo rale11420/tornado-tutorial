@@ -2,7 +2,10 @@ import { useState } from "react";
 import utils from "../utils/u.js";
 import { ethers } from "ethers";
 
+const wc = require("../circuit/witness_calculator.js");
+
 const ButtonState = { Normal: 0, Loading: 1, Disabled: 2 };
+tornadoAddress = "";
 
 const Interface = () => {
     const [account, updateAccount] = useState(null);
@@ -53,7 +56,30 @@ const Interface = () => {
     };
 
     const depositETH = async () => {
-        
+        const secret = ethers.toBigInt(ethers.utils.randomBytes(32)).toString();
+        const nullifier = ethers.toBigInt(ethers.utils.randomBytes(32)).toString();
+
+        const input = {
+            secret: utils.BN256ToBin(secret).split(""),
+            nullifier: utils.BN256ToBin(nullifier).split("")
+        };
+
+        var res = await fetch("/deposit.wasm");
+        var buffer = await res.arrayBuffer();
+        var depositWC = await wc(buffer);
+
+        const r = await depositWC.calculateWitness(input, 0);
+        const commitment = r[1];
+        const nullifierHash = r[2];
+
+        const value = ethers.toBigInt("1000000000000000000").toHexString();
+
+        const tx = {
+            to: tornadoAddress,
+            from: account.address,
+            value: value,
+            data: ""
+        };
     };
 
     return (
