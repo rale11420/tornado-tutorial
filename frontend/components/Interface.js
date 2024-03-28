@@ -3,6 +3,9 @@ import utils from "../utils/u.js";
 import { ethers } from "ethers";
 
 const wc = require("../circuit/witness_calculator.js");
+const tornadoJson = require("../json/Tornado.json");
+const tornadoABI = tornadoJson.abi;
+const tornadoInterface = new ethers.utils.Interface(tornadoABI);
 
 const ButtonState = { Normal: 0, Loading: 1, Disabled: 2 };
 tornadoAddress = "";
@@ -78,8 +81,20 @@ const Interface = () => {
             to: tornadoAddress,
             from: account.address,
             value: value,
-            data: ""
+            data: tornadoInterface.encodeFunctionData("deposit", [commitment])
         };
+
+        try {
+            const txHash = await window.ethereum.request({method: "eth_sendTransaction", params: [tx]});
+            const receipt = await window.ethereum.request({method: "eth_getTransactionReceipt", params: [txHash]});
+
+            const log = receipt.log[0];
+
+            const decodedData = tornadoInterface.decodeEventLog("Deposit", log.data, log.topics);
+            
+        } catch (error) {
+            
+        }
     };
 
     return (
