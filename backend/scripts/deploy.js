@@ -17,7 +17,7 @@ async function main() {
   console.log(verifier.address);
   const verifierAddress = verifier.address;
 
-  const tornado = await hre.ethers.deployContract("Tornado");
+  const tornado = await hre.ethers.deployContract("Tornado", [hasherAddress]);
   await tornado.waitForDeployment();
     console.log(tornado.address);
     const tornadoAddress = tornado.address;
