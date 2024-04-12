@@ -1,6 +1,7 @@
 import { useState } from "react";
 import utils from "../utils/u.js";
 import { ethers } from "ethers";
+import { decode } from "ethers/src.ts/wordlists/decode-owl.js";
 
 const wc = require("../circuit/witness_calculator.js");
 const tornadoJson = require("../json/Tornado.json");
@@ -13,6 +14,8 @@ tornadoAddress = "";
 const Interface = () => {
     const [account, updateAccount] = useState(null);
     const [metamaskButtonState, updateMetamaskButtonState] = useState(ButtonState.Normal);
+    const [proofElements, updateProofElements] = useState(null);
+    const [proofStringEl, updateProofStringEl] = useState(null);
 
     const connectMetamask = async () => {
 
@@ -92,8 +95,26 @@ const Interface = () => {
 
             const decodedData = tornadoInterface.decodeEventLog("Deposit", log.data, log.topics);
             
-        } catch (error) {
+            const proofElements = {
+                root: utils.BN256ToDecimal(decodedData.root),
+                nullifierHash: `${nullifierHash}`,
+                secret: secret,
+                nullifier: nullifier,
+                commitment: `${commitment}`,
+                hashPairings: decodedData.hashPairings.map((n) => (utils.BN256ToDecimal(n))),
+                hashDirections: decodedData.pairDirection
+            };
+
+            updateProofElements(btoa[JSON.stringify(proofElements)]);
             
+        } catch (error) {
+            console.log(e);
+        }
+    };
+
+    const copyProof = () => {
+        if(!!(proofStringEl)) {
+            navigator.clipboard.writeText(proofStringEl.innerHTML);
         }
     };
 
@@ -118,7 +139,23 @@ const Interface = () => {
                 !!(account) ? 
                     (
                         <div>
-                            <button onClick={depositETH}>Deposit 1 ETH</button>
+                            {
+                                !!proofElements ? (
+                                    <div>
+                                        <p><strong>Proof of deposit: </strong></p>
+                                        <div>
+                                            <span ref={(proofStringEl) => { updateProofStringEl(proofStringEl); }}>{proofElements}</span>
+                                        </div>
+                                        {
+                                            !!proofStringEl && (
+                                                <button onClick={copyProof}>Copy</button>
+                                            )
+                                        }
+                                    </div>
+                                ) : (
+                                    <button onClick={depositETH}>Deposit 1 ETH</button>
+                                )
+                            }
                         </div>
                     ) : (
                         <div>

@@ -29,6 +29,10 @@ const utils = {
         };
 
         return prePadding + r;
+    },
+
+    BN256ToDecimal: (bn) => {
+        return ethers.toBigInt(bn).toString();
     }
 };
 
