@@ -13,6 +13,7 @@ event Withdraw(address to, uint nullifierHash);
 
 contract Tornado is ReentrancyGuard {
     Hasher hasher;
+    address verifier;
 
     uint8 public treeLevel = 10;
     uint public denomination = 1 ether;
@@ -36,9 +37,9 @@ contract Tornado is ReentrancyGuard {
         92107057111723781731644487596367145237820179196979306040298521401349784975823
     ];
 
-    constructor(address _hasher/*, address _verifier */) {
+    constructor(address _hasher, address _verifier) {
         hasher = Hasher(_hasher);
-        //verifier = _verifier;
+        verifier = _verifier;
     }
 
     function deposit(uint _commitment) external payable nonReentrant {
