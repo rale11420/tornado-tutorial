@@ -4,6 +4,10 @@ pragma solidity 0.8.24;
 import "./Hasher.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+interface IVerifier {
+    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[3] calldata _pubSignals) external;
+}
+
 error IncorrectAmount();
 error DuplicateCommitmentHash();
 error TreeFull();
@@ -97,7 +101,27 @@ contract Tornado is ReentrancyGuard {
         emit Deposit(newRoot, hashPairings, hashDirections);
     }
 
-    // function withdraw() {
-        
-    // }
+    function withdraw(uint[2] calldata a, uint[2][2] calldata b, uint[2] calldata c, uint[2] calldata input) external payable nonReentrant {
+        uint256 _root = input[0];
+        uint256 _nullifierHash = input[1];
+
+        require(!nullifierHashes[_nullifierHash], "already spent");
+        require(roots[_root], "not root");
+
+        uint256 _addr = uint256(uint160(msg.sender));
+
+        (bool verifyOK, ) = verifier.call(abi.encodeCall(IVerifier.verifyProof, (a, b, c, [_root, _nullifierHash, _addr])));
+
+        require(verifyOK, "invalid proof");
+
+        nullifierHashes[_nullifierHash] = true;
+
+        address payable target = payable(msg.sender);
+
+        (bool ok, ) = target.call{value: denomination}("");
+
+        require(ok, "payable failed");
+
+        emit Withdraw(msg.sender, _nullifierHash);
+    }
 }

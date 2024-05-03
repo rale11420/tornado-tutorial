@@ -6,19 +6,20 @@
 // global scope, and execute the script.
 const hre = require("hardhat");
 
+//TODO Change how you deploy contracts  
 async function main() {
-  const hasher = await hre.ethers.deployContract("MiMC5Sponge");
-  await hasher.waitForDeployment();
-  console.log(hasher.address);
-  const hasherAddress = hasher.address; 
+    const hasher = await hre.ethers.deployContract("Hasher");
+    await hasher.waitForDeployment();
+    console.log(hasher.address);
+    const hasherAddress = hasher.address; 
 
-  const verifier = await hre.ethers.deployContract("Verifier");
-  await verifier.waitForDeployment();
-  console.log(verifier.address);
-  const verifierAddress = verifier.address;
+    const verifier = await hre.ethers.deployContract("Groth16Verifier");
+    await verifier.waitForDeployment();
+    console.log(verifier.address);
+    const verifierAddress = verifier.address;
 
-  const tornado = await hre.ethers.deployContract("Tornado", [hasherAddress]);
-  await tornado.waitForDeployment();
+    const tornado = await hre.ethers.deployContract("Tornado", [hasherAddress, verifierAddress]);
+    await tornado.waitForDeployment();
     console.log(tornado.address);
     const tornadoAddress = tornado.address;
 }
@@ -26,6 +27,6 @@ async function main() {
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+    console.error(error);
+    process.exitCode = 1;
 });
