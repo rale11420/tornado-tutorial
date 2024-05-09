@@ -1,7 +1,6 @@
 import { useState } from "react";
 import utils from "../utils/u.js";
 import { ethers } from "ethers";
-import { decode } from "ethers/src.ts/wordlists/decode-owl.js";
 
 const wc = require("../circuit/witness_calculator.js");
 const tornadoJson = require("../json/Tornado.json");
@@ -16,6 +15,7 @@ const Interface = () => {
     const [metamaskButtonState, updateMetamaskButtonState] = useState(ButtonState.Normal);
     const [proofElements, updateProofElements] = useState(null);
     const [proofStringEl, updateProofStringEl] = useState(null);
+    const [textArea, updateTextArea] = useState(null);
 
     const connectMetamask = async () => {
 
@@ -118,6 +118,50 @@ const Interface = () => {
         }
     };
 
+    const withdrawETH = async () => {
+        if(!textArea || !textArea.value) { 
+            alert("Plese input proof of deposit");
+        }
+
+        try {
+            const proofString = textArea.value;
+            const proofElements = JSON.parse(atob(proofString));
+            const SnarkJS = window('snarkjs');
+
+            const proofInput = {
+                "root": proofElements.root,
+                "nullifierHash": proofElements.nullifierHash,
+                "recipient": utils.BN256ToDecimal(account.address),
+                "secret": utils.BN256ToBin(proofElements.secret).split(""),
+                "nullifier": utils.BN256ToBin(proofElements.nullifier).split(""),
+                "hashPairings": proofElements.hashPairings,
+                "hashDirections": proofElements.hashDirections
+            };
+
+            const { proof, publicSignals } = await SnarkJS.groth16.fullProve(proofInput, "/withdraw.wasm", "/setup_final.zkey");
+            
+            const callInputs = [
+                proof.pi_a.slice(0, 2).map(utils.BN256ToHex),
+                proof.pi_b.slice(0, 2).map((row) => (utils.reverseCoordinates(row.map(utils.BN256ToHex)))),
+                proof.pi_c.slice(0, 2).map(utils.BN256ToHex),
+                publicSignals.slice(0, 2).map(utils.BN256ToHex)
+            ];
+
+            const callData = tornadoInterface.encodeFunctionData("withdraw", callInputs);
+            const tx = {
+                to: tornadoAddress,
+                from: account.address,
+                data: callData
+            };
+
+            const txHash = await window.ethereum.request({method: "eth_sendTransaction", params: [tx]});
+            const receipt = await window.ethereum.request({method: "eth_getTransactionReceipt", params: [txHash]});
+
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
     return (
         <div> 
             {
@@ -163,6 +207,24 @@ const Interface = () => {
                         </div>
                     )
             }
+            <div>
+                <hr/>
+            </div>
+            {
+                !!(account) ? (
+                    <div>
+                        <div>
+                            <textarea ref={(ta) => {updateTextArea(ta); }}></textarea>
+                        </div>
+                        <button onClick={withdrawETH}>Withdraw 1 ETH</button>
+                    </div>
+                ) : (
+                    <div>
+                        <p>You need Metamask</p>
+                    </div>
+                )
+            }
+            
         </div>
     );
 };

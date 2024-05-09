@@ -30,9 +30,22 @@ const utils = {
 
         return prePadding + r;
     },
-
+    BN256ToHex: (n) => {
+        let nstr = BigInt(n).toString(16);
+        while(nstr.length < 64) {
+            nstr = "0" + nstr;
+        }
+        nstr = `0x${nstr}`;
+        return nstr;
+    },
     BN256ToDecimal: (bn) => {
         return ethers.toBigInt(bn).toString();
+    },
+    reverseCoordinates: (p) => {
+        let r = [0, 0];
+        r[0] = p[1];
+        r[1] = r[0];
+        return r;
     }
 };
 
