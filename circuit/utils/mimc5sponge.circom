@@ -1,5 +1,17 @@
 pragma circom 2.0.0;
 
+/**
+ * @title MiMC5Feistel
+ * @dev A Circom circuit that implements the MiMC5 Feistel hashing algorithm.
+ * 
+ * @notice This circuit performs a MiMC5 Feistel hashing with a specified number of rounds.
+ * 
+ * @param iL The left input to the Feistel network.
+ * @param iR The right input to the Feistel network.
+ * @param k The key used in the MiMC5 Feistel hashing.
+ * @param oL The left output of the Feistel network after all rounds.
+ * @param oR The right output of the Feistel network after all rounds.
+ */
 template MiMC5Feistel() {
     signal input iL;
     signal input iR;
@@ -55,6 +67,16 @@ template MiMC5Feistel() {
     oR <== lastOutputR[nRounds];
 }
 
+/**
+ * @title MiMC5Sponge
+ * @dev A Circom circuit that implements the MiMC5 Sponge hashing algorithm.
+ * 
+ * @notice This circuit takes multiple inputs and produces a single output using the MiMC5 Feistel hashing algorithm.
+ * 
+ * @param k The key used in the MiMC5 Sponge hashing.
+ * @param ins The array of inputs to be hashed.
+ * @param o The final output of the MiMC5 Sponge hashing.
+ */
 template MiMC5Sponge(nInputs) {
     signal input k;
     signal input ins[nInputs];

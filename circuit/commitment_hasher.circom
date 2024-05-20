@@ -2,6 +2,17 @@ pragma circom  2.0.0;
 
 include "./utils/pedersen.circom";
 
+/**
+ * @title Commitment Hasher Circuit
+ * @dev A Circom circuit that computes a commitment and a nullifier hash using Pedersen hash functions.
+ * 
+ * @notice This circuit takes a secret and a nullifier as inputs and produces a commitment and a nullifier hash as outputs.
+ * 
+ * @param secret The secret associated with the commitment.
+ * @param nullifier The nullifier used to derive the nullifierHash.
+ * @param commitment The calculated commitment hash combining the secret and nullifier.
+ * @param nullifierHash The calculated hash of the nullifier.
+ */
 template CommitmentHasher() {
     signal input secret[256];
     signal input nullifier[256];

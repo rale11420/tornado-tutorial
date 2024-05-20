@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+/**
+ * @title Hasher
+ * @dev A contract that implements the MiMC5 cryptographic hash function using Feistel and Sponge constructions.
+ */
 contract Hasher {
 
     uint8 numberOfRounds = 20;
@@ -28,6 +32,14 @@ contract Hasher {
         83609206051462019113574355964455870505471165308843272719705749250652700388243
     ];
 
+    /**
+     * @dev Computes the MiMC5 Feistel round function.
+     * @param _iL The left input value.
+     * @param _iR The right input value.
+     * @param _k The round key.
+     * @return oL The left output value after all rounds.
+     * @return oR The right output value after all rounds.
+     */
     function MiMC5Feistel(uint _iL, uint _iR, uint _k) internal view returns (uint oL, uint oR) {
 
         uint lastL = _iL;
@@ -55,6 +67,12 @@ contract Hasher {
         return (lastL, lastR);
     }
 
+    /**
+     * @dev Computes the MiMC5 hash using the Sponge construction.
+     * @param _ins The input array to be hashed.
+     * @param _k The key used in the Feistel rounds.
+     * @return h The hash value.
+     */
     function MiMC5Sponge(uint[2] memory  _ins, uint _k) external view returns (uint h) {
 
         uint lastR = 0;

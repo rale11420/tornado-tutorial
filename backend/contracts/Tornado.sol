@@ -15,6 +15,10 @@ error TreeFull();
 event Deposit(uint root, uint[10] hashPairings, uint8[10] pairDirection);
 event Withdraw(address to, uint nullifierHash);
 
+/**
+ * @title Tornado
+ * @dev A contract for private transactions using a merkle tree and zk-SNARKs.
+ */
 contract Tornado is ReentrancyGuard {
     Hasher hasher;
     address verifier;
@@ -40,12 +44,21 @@ contract Tornado is ReentrancyGuard {
         37212461082006188289348927719660091156592460620634069164606394939386358898011,
         92107057111723781731644487596367145237820179196979306040298521401349784975823
     ];
-
+    
+    /**
+     * @dev Constructor to initialize the Tornado contract.
+     * @param _hasher The address of the hasher contract.
+     * @param _verifier The address of the verifier contract.
+     */
     constructor(address _hasher, address _verifier) {
         hasher = Hasher(_hasher);
         verifier = _verifier;
     }
 
+    /**
+     * @dev Function to deposit an amount into the contract.
+     * @param _commitment The commitment hash of the deposit.
+     */
     function deposit(uint _commitment) external payable nonReentrant {
         if(msg.value != denomination) {
             revert IncorrectAmount();
@@ -101,6 +114,13 @@ contract Tornado is ReentrancyGuard {
         emit Deposit(newRoot, hashPairings, hashDirections);
     }
 
+    /**
+     * @dev Function to withdraw an amount from the contract.
+     * @param a The first part of the zk-SNARK proof.
+     * @param b The second part of the zk-SNARK proof.
+     * @param c The third part of the zk-SNARK proof.
+     * @param input The public inputs for the zk-SNARK proof.
+     */
     function withdraw(uint[2] calldata a, uint[2][2] calldata b, uint[2] calldata c, uint[2] calldata input) external payable nonReentrant {
         uint256 _root = input[0];
         uint256 _nullifierHash = input[1];
