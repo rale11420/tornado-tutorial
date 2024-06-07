@@ -1,5 +1,5 @@
-import Script from "next/script";
-import Interface from "../components/Interface.js";
+import Script from 'next/script'
+import Interface from '../components/Interface.js'
 
 const Index = () => {
     return (
@@ -7,7 +7,7 @@ const Index = () => {
             <Script src="/snarkjs.min.js" />
             <Interface />
         </div>
-    );
-};
+    )
+}
 
-export default Index;
+export default Index

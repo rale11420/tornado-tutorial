@@ -6,9 +6,9 @@ pragma solidity 0.8.24;
  * @dev A contract that implements the MiMC5 cryptographic hash function using Feistel and Sponge constructions.
  */
 contract Hasher {
-
     uint8 numberOfRounds = 20;
-    uint p = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+    uint p =
+        21888242871839275222246405745257275088548364400416034343698204186575808495617;
     uint[20] c = [
         0,
         97601377400413275829077561935054313120124005635779023012257940020489541426615,
@@ -40,18 +40,21 @@ contract Hasher {
      * @return oL The left output value after all rounds.
      * @return oR The right output value after all rounds.
      */
-    function MiMC5Feistel(uint _iL, uint _iR, uint _k) internal view returns (uint oL, uint oR) {
-
+    function MiMC5Feistel(
+        uint _iL,
+        uint _iR,
+        uint _k
+    ) internal view returns (uint oL, uint oR) {
         uint lastL = _iL;
         uint lastR = _iR;
-        
+
         uint temp;
 
         uint base;
         uint base2;
         uint base4;
 
-        for(uint8 i = 0; i < numberOfRounds; i++) {
+        for (uint8 i = 0; i < numberOfRounds; i++) {
             base = addmod(lastR, _k, p);
             base = addmod(base, c[i], p);
 
@@ -73,18 +76,18 @@ contract Hasher {
      * @param _k The key used in the Feistel rounds.
      * @return h The hash value.
      */
-    function MiMC5Sponge(uint[2] memory  _ins, uint _k) external view returns (uint h) {
-
+    function MiMC5Sponge(
+        uint[2] memory _ins,
+        uint _k
+    ) external view returns (uint h) {
         uint lastR = 0;
         uint lastC = 0;
 
-        for(uint8 i = 0; i < _ins.length; i++) {
+        for (uint8 i = 0; i < _ins.length; i++) {
             lastR = addmod(lastR, _ins[i], p);
             (lastR, lastC) = MiMC5Feistel(lastR, lastC, _k);
         }
 
         h = lastR;
-        
     }
-
 }

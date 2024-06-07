@@ -5,7 +5,12 @@ import "./Hasher.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IVerifier {
-    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[3] calldata _pubSignals) external;
+    function verifyProof(
+        uint[2] calldata _pA,
+        uint[2][2] calldata _pB,
+        uint[2] calldata _pC,
+        uint[3] calldata _pubSignals
+    ) external;
 }
 
 error IncorrectAmount();
@@ -27,10 +32,10 @@ contract Tornado is ReentrancyGuard {
     uint public denomination = 1 ether;
     uint public nextLeafIdx = 0;
 
-    mapping (uint => bool) public roots;
-    mapping (uint8 => uint) public lastLevelHash;
-    mapping (uint => bool) public nullifierHashes;
-    mapping (uint => bool) public commitments;
+    mapping(uint => bool) public roots;
+    mapping(uint8 => uint) public lastLevelHash;
+    mapping(uint => bool) public nullifierHashes;
+    mapping(uint => bool) public commitments;
 
     uint[10] levelDefaults = [
         56366143589312632909165689303288424445591722494581909097469615363979918107647,
@@ -44,7 +49,7 @@ contract Tornado is ReentrancyGuard {
         37212461082006188289348927719660091156592460620634069164606394939386358898011,
         92107057111723781731644487596367145237820179196979306040298521401349784975823
     ];
-    
+
     /**
      * @dev Constructor to initialize the Tornado contract.
      * @param _hasher The address of the hasher contract.
@@ -60,13 +65,13 @@ contract Tornado is ReentrancyGuard {
      * @param _commitment The commitment hash of the deposit.
      */
     function deposit(uint _commitment) external payable nonReentrant {
-        if(msg.value != denomination) {
+        if (msg.value != denomination) {
             revert IncorrectAmount();
         }
-        if(commitments[_commitment]) {
+        if (commitments[_commitment]) {
             revert DuplicateCommitmentHash();
         }
-        if(nextLeafIdx >= 2 ** treeLevel) {
+        if (nextLeafIdx >= 2 ** treeLevel) {
             revert TreeFull();
         }
 
@@ -84,7 +89,7 @@ contract Tornado is ReentrancyGuard {
         for (uint8 i = 0; i < treeLevel; i++) {
             lastLevelHash[treeLevel] = currentHash;
 
-            if(currentIdx % 2 == 0) {
+            if (currentIdx % 2 == 0) {
                 left = currentHash;
                 right = levelDefaults[i];
                 hashPairings[i] = levelDefaults[i];
@@ -99,7 +104,7 @@ contract Tornado is ReentrancyGuard {
             ins[0] = left;
             ins[1] = right;
 
-            (uint h) = hasher.MiMC5Sponge{ gas: 150000 }(ins, _commitment);
+            uint h = hasher.MiMC5Sponge{gas: 150000}(ins, _commitment);
 
             currentHash = h;
             currentIdx = currentIdx / 2;
@@ -121,7 +126,12 @@ contract Tornado is ReentrancyGuard {
      * @param c The third part of the zk-SNARK proof.
      * @param input The public inputs for the zk-SNARK proof.
      */
-    function withdraw(uint[2] calldata a, uint[2][2] calldata b, uint[2] calldata c, uint[2] calldata input) external payable nonReentrant {
+    function withdraw(
+        uint[2] calldata a,
+        uint[2][2] calldata b,
+        uint[2] calldata c,
+        uint[2] calldata input
+    ) external payable nonReentrant {
         uint256 _root = input[0];
         uint256 _nullifierHash = input[1];
 
@@ -130,7 +140,12 @@ contract Tornado is ReentrancyGuard {
 
         uint256 _addr = uint256(uint160(msg.sender));
 
-        (bool verifyOK, ) = verifier.call(abi.encodeCall(IVerifier.verifyProof, (a, b, c, [_root, _nullifierHash, _addr])));
+        (bool verifyOK, ) = verifier.call(
+            abi.encodeCall(
+                IVerifier.verifyProof,
+                (a, b, c, [_root, _nullifierHash, _addr])
+            )
+        );
 
         require(verifyOK, "invalid proof");
 
