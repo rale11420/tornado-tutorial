@@ -1,0 +1,418 @@
+/* ── layout ──────────────────────────────────────── */
+.app {
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 212, 170, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(123, 97, 255, 0.08) 0%, transparent 60%),
+        #080c14;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── header ──────────────────────────────────────── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 36px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(8, 12, 20, 0.85);
+    backdrop-filter: blur(16px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #fff;
+}
+
+.logoIcon {
+    font-size: 1.4rem;
+}
+
+.networkBadge {
+    padding: 5px 14px;
+    border-radius: 100px;
+    background: rgba(0, 212, 170, 0.08);
+    border: 1px solid rgba(0, 212, 170, 0.25);
+    color: #00d4aa;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* ── main ────────────────────────────────────────── */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* ── hero (disconnected) ─────────────────────────── */
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    position: relative;
+}
+
+.heroEyebrow {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #00d4aa;
+    padding: 6px 16px;
+    border-radius: 100px;
+    background: rgba(0, 212, 170, 0.08);
+    border: 1px solid rgba(0, 212, 170, 0.2);
+}
+
+.heroTitle {
+    font-size: clamp(2.8rem, 8vw, 4.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    color: #fff;
+}
+
+.gradient {
+    background: linear-gradient(135deg, #00d4aa 0%, #7b61ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.heroSub {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.45);
+    max-width: 460px;
+    line-height: 1.7;
+}
+
+.connectBtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 44px;
+    background: linear-gradient(135deg, #00d4aa, #7b61ff);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 40px rgba(0, 212, 170, 0.3), 0 4px 20px rgba(0, 0, 0, 0.4);
+    margin-top: 8px;
+}
+
+.connectBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 60px rgba(0, 212, 170, 0.5), 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.connectBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.connectBtn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.techBadges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.techBadges span {
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+/* ── wallet bar (connected) ──────────────────────── */
+.walletBar {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    backdrop-filter: blur(20px);
+}
+
+.walletInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00ff87;
+    box-shadow: 0 0 10px #00ff87;
+    flex-shrink: 0;
+}
+
+.address {
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.balance {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #00d4aa;
+    padding: 3px 10px;
+    background: rgba(0, 212, 170, 0.1);
+    border-radius: 8px;
+}
+
+.contractAddr {
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── panels ──────────────────────────────────────── */
+.panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+}
+
+@media (max-width: 620px) {
+    .panels {
+        grid-template-columns: 1fr;
+    }
+}
+
+.panel {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 24px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    backdrop-filter: blur(20px);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.panel:hover {
+    border-color: rgba(0, 212, 170, 0.18);
+    box-shadow: 0 0 40px rgba(0, 212, 170, 0.05);
+}
+
+.panelTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.panelTitle {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #fff;
+}
+
+.amountBadge {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #00d4aa;
+    background: rgba(0, 212, 170, 0.1);
+    border: 1px solid rgba(0, 212, 170, 0.2);
+    padding: 4px 12px;
+    border-radius: 8px;
+}
+
+.panelDesc {
+    font-size: 0.83rem;
+    color: rgba(255, 255, 255, 0.38);
+    line-height: 1.65;
+}
+
+/* ── action button ───────────────────────────────── */
+.actionBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #00d4aa, #7b61ff);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 20px rgba(0, 212, 170, 0.2);
+    margin-top: auto;
+}
+
+.actionBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 0 40px rgba(0, 212, 170, 0.4);
+}
+
+.actionBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.actionBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── textarea ────────────────────────────────────── */
+.textarea {
+    width: 100%;
+    min-height: 96px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    padding: 14px;
+    color: rgba(255, 255, 255, 0.75);
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.textarea::placeholder {
+    color: rgba(255, 255, 255, 0.18);
+}
+
+.textarea:focus {
+    border-color: rgba(0, 212, 170, 0.35);
+    box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.07);
+}
+
+/* ── deposit note box ────────────────────────────── */
+.noteBox {
+    background: rgba(0, 255, 135, 0.04);
+    border: 1px solid rgba(0, 255, 135, 0.18);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.noteLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #00ff87;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.greenDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #00ff87;
+    box-shadow: 0 0 8px #00ff87;
+    flex-shrink: 0;
+}
+
+.noteText {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.55);
+    word-break: break-all;
+    max-height: 72px;
+    overflow-y: auto;
+    line-height: 1.5;
+}
+
+.copyBtn {
+    align-self: flex-start;
+    padding: 7px 16px;
+    background: rgba(0, 255, 135, 0.08);
+    border: 1px solid rgba(0, 255, 135, 0.25);
+    border-radius: 8px;
+    color: #00ff87;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.02em;
+}
+
+.copyBtn:hover {
+    background: rgba(0, 255, 135, 0.15);
+    box-shadow: 0 0 16px rgba(0, 255, 135, 0.2);
+}
+
+/* ── spinner ─────────────────────────────────────── */
+.spinner {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── footer ──────────────────────────────────────── */
+.footer {
+    text-align: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.18);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}

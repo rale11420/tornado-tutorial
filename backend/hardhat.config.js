@@ -1,5 +1,3 @@
-const { version } = require("hardhat");
-
 require("@nomicfoundation/hardhat-toolbox");
 
 const dotenv = require("dotenv");
@@ -15,14 +13,14 @@ module.exports = {
     ]
   },
   networks: {
-    goerli: {
-      url: process.env.NODE_URL,
-      accounts: [process.env.PRIVATE_KEY]
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || '',
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
     }
   },
   etherscan: {
     apiKey: {
-      goerli: process.env.API_KEY
+      sepolia: process.env.ETHERSCAN_API_KEY
     }
   }
 };

@@ -1,92 +1,94 @@
 import { useState } from 'react'
 import utils from '../utils/u.js'
 import { ethers } from 'ethers'
+import styles from './Interface.module.css'
 
 const wc = require('../circuit/witness_calculator.js')
 const tornadoJson = require('../json/Tornado.json')
 const tornadoABI = tornadoJson.abi
-const tornadoInterface = new ethers.utils.Interface(tornadoABI)
+const tornadoInterface = new ethers.Interface(tornadoABI)
 
-const ButtonState = { Normal: 0, Loading: 1, Disabled: 2 }
-tornadoAddress = ''
+const ButtonState = { Normal: 0, Disabled: 1 }
+const tornadoAddress = process.env.NEXT_PUBLIC_TORNADO_ADDRESS || ''
+
+const short = (addr) => `${addr.slice(0, 6)}…${addr.slice(-4)}`
 
 const Interface = () => {
     const [account, updateAccount] = useState(null)
-    const [metamaskButtonState, updateMetamaskButtonState] = useState(
-        ButtonState.Normal
-    )
+    const [connecting, setConnecting] = useState(false)
     const [proofElements, updateProofElements] = useState(null)
     const [proofStringEl, updateProofStringEl] = useState(null)
     const [textArea, updateTextArea] = useState(null)
+    const [depositLoading, setDepositLoading] = useState(false)
+    const [withdrawLoading, setWithdrawLoading] = useState(false)
 
     const connectMetamask = async () => {
-        updateMetamaskButtonState(ButtonState.Disabled)
+        setConnecting(true)
         try {
             if (!window.ethereum) {
-                alert('Install Metamask')
-                throw 'no-metamask'
+                alert('Please install MetaMask')
+                return
             }
 
-            var accounts = await window.ethereum.request({
+            const accounts = await window.ethereum.request({
                 method: 'eth_requestAccounts',
                 params: [],
             })
 
-            var chainId = await window.ethereum.request({
+            const chainId = await window.ethereum.request({
                 method: 'eth_chainId',
                 params: [],
             })
 
-            var activeAccount = accounts[0]
-            var balance = await window.ethereum.request({
+            if (parseInt(chainId, 16) !== 11155111) {
+                alert(
+                    `Please switch MetaMask to Sepolia testnet (Chain ID: 11155111). Your current chain ID is ${parseInt(chainId, 16)}.`
+                )
+                return
+            }
+
+            const activeAccount = accounts[0]
+            const balance = await window.ethereum.request({
                 method: 'eth_getBalance',
                 params: [activeAccount, 'latest'],
             })
-            balance = utils.moveDecimalLeft(ethers.toBigInt(balance).toString())
 
-            var newAccountState = {
-                chainId: chainId,
+            updateAccount({
+                chainId,
                 address: activeAccount,
-                balance: balance,
-            }
-
-            updateAccount(newAccountState)
+                balance: ethers.formatEther(balance),
+            })
         } catch (error) {
             console.log(error)
         }
-
-        updateMetamaskButtonState(ButtonState.Normal)
+        setConnecting(false)
     }
 
     const depositETH = async () => {
-        const secret = ethers.toBigInt(ethers.utils.randomBytes(32)).toString()
-        const nullifier = ethers
-            .toBigInt(ethers.utils.randomBytes(32))
-            .toString()
-
-        const input = {
-            secret: utils.BN256ToBin(secret).split(''),
-            nullifier: utils.BN256ToBin(nullifier).split(''),
-        }
-
-        var res = await fetch('/deposit.wasm')
-        var buffer = await res.arrayBuffer()
-        var depositWC = await wc(buffer)
-
-        const r = await depositWC.calculateWitness(input, 0)
-        const commitment = r[1]
-        const nullifierHash = r[2]
-
-        const value = ethers.toBigInt('1000000000000000000').toHexString()
-
-        const tx = {
-            to: tornadoAddress,
-            from: account.address,
-            value: value,
-            data: tornadoInterface.encodeFunctionData('deposit', [commitment]),
-        }
-
+        setDepositLoading(true)
         try {
+            const secret = ethers.toBigInt(ethers.randomBytes(32)).toString()
+            const nullifier = ethers.toBigInt(ethers.randomBytes(32)).toString()
+
+            const input = {
+                secret: utils.BN256ToBin(secret).split(''),
+                nullifier: utils.BN256ToBin(nullifier).split(''),
+            }
+
+            const res = await fetch('/deposit.wasm')
+            const buffer = await res.arrayBuffer()
+            const depositWC = await wc(buffer)
+            const r = await depositWC.calculateWitness(input, 0)
+            const commitment = r[1]
+            const nullifierHash = r[2]
+
+            const tx = {
+                to: tornadoAddress,
+                from: account.address,
+                value: '0xde0b6b3a7640000',
+                data: tornadoInterface.encodeFunctionData('deposit', [commitment]),
+            }
+
             const txHash = await window.ethereum.request({
                 method: 'eth_sendTransaction',
                 params: [tx],
@@ -96,19 +98,18 @@ const Interface = () => {
                 params: [txHash],
             })
 
-            const log = receipt.log[0]
-
+            const log = receipt.logs[0]
             const decodedData = tornadoInterface.decodeEventLog(
                 'Deposit',
                 log.data,
                 log.topics
             )
 
-            const proofElements = {
+            const proof = {
                 root: utils.BN256ToDecimal(decodedData.root),
                 nullifierHash: `${nullifierHash}`,
-                secret: secret,
-                nullifier: nullifier,
+                secret,
+                nullifier,
                 commitment: `${commitment}`,
                 hashPairings: decodedData.hashPairings.map((n) =>
                     utils.BN256ToDecimal(n)
@@ -116,52 +117,59 @@ const Interface = () => {
                 hashDirections: decodedData.pairDirection,
             }
 
-            updateProofElements(btoa[JSON.stringify(proofElements)])
+            updateProofElements(btoa(JSON.stringify(proof)))
         } catch (error) {
-            console.log(e)
+            console.log(error)
         }
+        setDepositLoading(false)
     }
 
     const copyProof = () => {
-        if (!!proofStringEl) {
+        if (proofStringEl) {
             navigator.clipboard.writeText(proofStringEl.innerHTML)
         }
     }
 
     const withdrawETH = async () => {
-        if (!textArea || !textArea.value) {
-            alert('Plese input proof of deposit')
+        if (!textArea?.value) {
+            alert('Please paste your deposit note first')
+            return
+        }
+        if (!window.snarkjs) {
+            alert('snarkjs is still loading, please retry in a moment')
+            return
         }
 
+        setWithdrawLoading(true)
         try {
-            const proofString = textArea.value
-            const proofElements = JSON.parse(atob(proofString))
-            const SnarkJS = window('snarkjs')
+            const proof = JSON.parse(atob(textArea.value))
+            const SnarkJS = window.snarkjs
 
             const proofInput = {
-                root: proofElements.root,
-                nullifierHash: proofElements.nullifierHash,
+                root: proof.root,
+                nullifierHash: proof.nullifierHash,
                 recipient: utils.BN256ToDecimal(account.address),
-                secret: utils.BN256ToBin(proofElements.secret).split(''),
-                nullifier: utils.BN256ToBin(proofElements.nullifier).split(''),
-                hashPairings: proofElements.hashPairings,
-                hashDirections: proofElements.hashDirections,
+                secret: utils.BN256ToBin(proof.secret).split(''),
+                nullifier: utils.BN256ToBin(proof.nullifier).split(''),
+                hashPairings: proof.hashPairings,
+                hashDirections: proof.hashDirections,
             }
 
-            const { proof, publicSignals } = await SnarkJS.groth16.fullProve(
-                proofInput,
-                '/withdraw.wasm',
-                '/setup_final.zkey'
-            )
+            const { proof: zkProof, publicSignals } =
+                await SnarkJS.groth16.fullProve(
+                    proofInput,
+                    '/withdraw.wasm',
+                    '/setup_final.zkey'
+                )
 
             const callInputs = [
-                proof.pi_a.slice(0, 2).map(utils.BN256ToHex),
-                proof.pi_b
+                zkProof.pi_a.slice(0, 2).map(utils.BN256ToHex),
+                zkProof.pi_b
                     .slice(0, 2)
                     .map((row) =>
                         utils.reverseCoordinates(row.map(utils.BN256ToHex))
                     ),
-                proof.pi_c.slice(0, 2).map(utils.BN256ToHex),
+                zkProof.pi_c.slice(0, 2).map(utils.BN256ToHex),
                 publicSignals.slice(0, 2).map(utils.BN256ToHex),
             ]
 
@@ -169,94 +177,193 @@ const Interface = () => {
                 'withdraw',
                 callInputs
             )
-            const tx = {
-                to: tornadoAddress,
-                from: account.address,
-                data: callData,
-            }
 
             const txHash = await window.ethereum.request({
                 method: 'eth_sendTransaction',
-                params: [tx],
+                params: [
+                    { to: tornadoAddress, from: account.address, data: callData },
+                ],
             })
-            const receipt = await window.ethereum.request({
+            await window.ethereum.request({
                 method: 'eth_getTransactionReceipt',
                 params: [txHash],
             })
         } catch (e) {
             console.log(e)
         }
+        setWithdrawLoading(false)
     }
 
     return (
-        <div>
-            {!!account ? (
-                <div>
-                    <p>
-                        ChainId: {ethers.toBigInt(account.chainId).toString()}
-                    </p>
-                    <p>Wallet address: {account.address}</p>
-                    <p>Balance: {account.balance} ETH</p>
+        <div className={styles.app}>
+            <header className={styles.header}>
+                <div className={styles.logo}>
+                    <span className={styles.logoIcon}>🌀</span>
+                    <span>ZKMixer</span>
                 </div>
-            ) : (
-                <button
-                    onClick={connectMetamask}
-                    disabled={metamaskButtonState == ButtonState.Disabled}
-                >
-                    Connect Metamask
-                </button>
-            )}
-            <div>
-                <hr />
-            </div>
-            {!!account ? (
-                <div>
-                    {!!proofElements ? (
-                        <div>
-                            <p>
-                                <strong>Proof of deposit: </strong>
-                            </p>
-                            <div>
-                                <span
-                                    ref={(proofStringEl) => {
-                                        updateProofStringEl(proofStringEl)
-                                    }}
-                                >
-                                    {proofElements}
+                <div className={styles.networkBadge}>⬡ Sepolia</div>
+            </header>
+
+            <main className={styles.main}>
+                {!account ? (
+                    <div className={styles.hero}>
+                        <span className={styles.heroEyebrow}>
+                            Zero-Knowledge Privacy
+                        </span>
+                        <h1 className={styles.heroTitle}>
+                            Mix your ETH.
+                            <br />
+                            <span className={styles.gradient}>
+                                Leave no trace.
+                            </span>
+                        </h1>
+                        <p className={styles.heroSub}>
+                            Deposit 1 ETH. Save your proof note. Withdraw from
+                            any address — fully anonymous, powered by
+                            zk-SNARKs.
+                        </p>
+                        <button
+                            className={styles.connectBtn}
+                            onClick={connectMetamask}
+                            disabled={connecting}
+                        >
+                            {connecting ? (
+                                <>
+                                    <span className={styles.spinner} />
+                                    Connecting…
+                                </>
+                            ) : (
+                                'Connect Wallet'
+                            )}
+                        </button>
+                        <div className={styles.techBadges}>
+                            <span>Groth16</span>
+                            <span>Circom 2.0</span>
+                            <span>MiMC Hash</span>
+                            <span>Sepolia</span>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className={styles.walletBar}>
+                            <div className={styles.walletInfo}>
+                                <span className={styles.dot} />
+                                <span className={styles.address}>
+                                    {short(account.address)}
+                                </span>
+                                <span className={styles.balance}>
+                                    {parseFloat(account.balance).toFixed(4)} ETH
                                 </span>
                             </div>
-                            {!!proofStringEl && (
-                                <button onClick={copyProof}>Copy</button>
-                            )}
+                            <span className={styles.contractAddr}>
+                                {tornadoAddress
+                                    ? short(tornadoAddress)
+                                    : 'Contract not configured'}
+                            </span>
                         </div>
-                    ) : (
-                        <button onClick={depositETH}>Deposit 1 ETH</button>
-                    )}
-                </div>
-            ) : (
-                <div>
-                    <p>You need Metamask</p>
-                </div>
-            )}
-            <div>
-                <hr />
-            </div>
-            {!!account ? (
-                <div>
-                    <div>
-                        <textarea
-                            ref={(ta) => {
-                                updateTextArea(ta)
-                            }}
-                        ></textarea>
-                    </div>
-                    <button onClick={withdrawETH}>Withdraw 1 ETH</button>
-                </div>
-            ) : (
-                <div>
-                    <p>You need Metamask</p>
-                </div>
-            )}
+
+                        <div className={styles.panels}>
+                            {/* ── Deposit ── */}
+                            <div className={styles.panel}>
+                                <div className={styles.panelTop}>
+                                    <h2 className={styles.panelTitle}>
+                                        Deposit
+                                    </h2>
+                                    <span className={styles.amountBadge}>
+                                        1 ETH
+                                    </span>
+                                </div>
+                                <p className={styles.panelDesc}>
+                                    Send 1 ETH to the mixer. You&apos;ll
+                                    receive a secret note — keep it safe,
+                                    it&apos;s your only way to withdraw.
+                                </p>
+
+                                {proofElements ? (
+                                    <div className={styles.noteBox}>
+                                        <div className={styles.noteLabel}>
+                                            <span className={styles.greenDot} />
+                                            Deposit note — save this!
+                                        </div>
+                                        <div className={styles.noteText}>
+                                            <span
+                                                ref={(el) =>
+                                                    updateProofStringEl(el)
+                                                }
+                                            >
+                                                {proofElements}
+                                            </span>
+                                        </div>
+                                        <button
+                                            className={styles.copyBtn}
+                                            onClick={copyProof}
+                                        >
+                                            Copy note
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        className={styles.actionBtn}
+                                        onClick={depositETH}
+                                        disabled={depositLoading}
+                                    >
+                                        {depositLoading ? (
+                                            <>
+                                                <span
+                                                    className={styles.spinner}
+                                                />
+                                                Depositing…
+                                            </>
+                                        ) : (
+                                            'Deposit 1 ETH'
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* ── Withdraw ── */}
+                            <div className={styles.panel}>
+                                <div className={styles.panelTop}>
+                                    <h2 className={styles.panelTitle}>
+                                        Withdraw
+                                    </h2>
+                                    <span className={styles.amountBadge}>
+                                        1 ETH
+                                    </span>
+                                </div>
+                                <p className={styles.panelDesc}>
+                                    Paste your deposit note, generate a ZK
+                                    proof on-device, and withdraw to any
+                                    address — no link to the original deposit.
+                                </p>
+                                <textarea
+                                    className={styles.textarea}
+                                    placeholder="Paste your deposit note here…"
+                                    ref={(ta) => updateTextArea(ta)}
+                                />
+                                <button
+                                    className={styles.actionBtn}
+                                    onClick={withdrawETH}
+                                    disabled={withdrawLoading}
+                                >
+                                    {withdrawLoading ? (
+                                        <>
+                                            <span className={styles.spinner} />
+                                            Generating proof…
+                                        </>
+                                    ) : (
+                                        'Withdraw 1 ETH'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </main>
+
+            <footer className={styles.footer}>
+                Powered by Groth16 · Circom 2.0 · Sepolia Testnet
+            </footer>
         </div>
     )
 }

@@ -1,31 +1,24 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
 const hre = require("hardhat");
 
-//TODO Change how you deploy contracts  
 async function main() {
     const hasher = await hre.ethers.deployContract("Hasher");
     await hasher.waitForDeployment();
-    console.log(hasher.address);
-    const hasherAddress = hasher.address; 
+    console.log("Hasher deployed to:", hasher.target);
+    const hasherAddress = hasher.target;
 
     const verifier = await hre.ethers.deployContract("Groth16Verifier");
     await verifier.waitForDeployment();
-    console.log(verifier.address);
-    const verifierAddress = verifier.address;
+    console.log("Verifier deployed to:", verifier.target);
+    const verifierAddress = verifier.target;
 
     const tornado = await hre.ethers.deployContract("Tornado", [hasherAddress, verifierAddress]);
     await tornado.waitForDeployment();
-    console.log(tornado.address);
-    const tornadoAddress = tornado.address;
+    console.log("Tornado deployed to:", tornado.target);
+
+    console.log("\n--- Add this to frontend/.env.local ---");
+    console.log(`NEXT_PUBLIC_TORNADO_ADDRESS=${tornado.target}`);
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
     console.error(error);
     process.exitCode = 1;
