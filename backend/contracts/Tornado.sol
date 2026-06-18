@@ -10,7 +10,7 @@ interface IVerifier {
         uint[2][2] calldata _pB,
         uint[2] calldata _pC,
         uint[3] calldata _pubSignals
-    ) external;
+    ) external view returns (bool);
 }
 
 error IncorrectAmount();
@@ -87,7 +87,7 @@ contract Tornado is ReentrancyGuard {
         uint[2] memory ins;
 
         for (uint8 i = 0; i < treeLevel; i++) {
-            lastLevelHash[treeLevel] = currentHash;
+            lastLevelHash[i] = currentHash;
 
             if (currentIdx % 2 == 0) {
                 left = currentHash;
@@ -140,14 +140,10 @@ contract Tornado is ReentrancyGuard {
 
         uint256 _addr = uint256(uint160(msg.sender));
 
-        (bool verifyOK, ) = verifier.call(
-            abi.encodeCall(
-                IVerifier.verifyProof,
-                (a, b, c, [_root, _nullifierHash, _addr])
-            )
+        require(
+            IVerifier(verifier).verifyProof(a, b, c, [_root, _nullifierHash, _addr]),
+            "invalid proof"
         );
-
-        require(verifyOK, "invalid proof");
 
         nullifierHashes[_nullifierHash] = true;
 

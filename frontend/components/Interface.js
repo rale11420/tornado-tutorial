@@ -93,10 +93,15 @@ const Interface = () => {
                 method: 'eth_sendTransaction',
                 params: [tx],
             })
-            const receipt = await window.ethereum.request({
-                method: 'eth_getTransactionReceipt',
-                params: [txHash],
-            })
+
+            let receipt = null
+            while (!receipt) {
+                await new Promise((r) => setTimeout(r, 2000))
+                receipt = await window.ethereum.request({
+                    method: 'eth_getTransactionReceipt',
+                    params: [txHash],
+                })
+            }
 
             const log = receipt.logs[0]
             const decodedData = tornadoInterface.decodeEventLog(
@@ -184,10 +189,15 @@ const Interface = () => {
                     { to: tornadoAddress, from: account.address, data: callData },
                 ],
             })
-            await window.ethereum.request({
-                method: 'eth_getTransactionReceipt',
-                params: [txHash],
-            })
+
+            let withdrawReceipt = null
+            while (!withdrawReceipt) {
+                await new Promise((r) => setTimeout(r, 2000))
+                withdrawReceipt = await window.ethereum.request({
+                    method: 'eth_getTransactionReceipt',
+                    params: [txHash],
+                })
+            }
         } catch (e) {
             console.log(e)
         }
